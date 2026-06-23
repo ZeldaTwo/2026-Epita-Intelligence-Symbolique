@@ -1,0 +1,44 @@
+[
+  {
+    "id": "arith_01",
+    "category": "smt_arithmetic",
+    "text": "Alice a trois fois plus de billes que Bob. Ensemble, ils ont 40 billes. Combien de billes Bob a-t-il ?",
+    "expected_assignment": {"bob": 10, "alice": 30}
+  },
+  {
+    "id": "arith_02",
+    "category": "smt_arithmetic",
+    "text": "Un fermier a des poules et des lapins. Il compte 35 têtes et 94 pattes au total. Combien y a-t-il de poules et de lapins ?",
+    "expected_assignment": {"poules": 23, "lapins": 12}
+  },
+  {
+    "id": "arith_03",
+    "category": "smt_arithmetic",
+    "text": "Le prix d'un livre plus celui d'un stylo fait 22 euros. Le livre coute 18 euros de plus que le stylo. Quel est le prix du stylo ?",
+    "expected_assignment": {"stylo": 2, "livre": 20}
+  },
+  {
+    "id": "logic_01",
+    "category": "sat_boolean",
+    "text": "Trois suspects A, B et C sont interroges. On sait que : si A est coupable alors B est innocent. Si B est coupable alors C est coupable. Au moins un des trois est coupable. C est innocent. Qui est coupable ?",
+    "expected_assignment": {"c_coupable": false}
+  },
+  {
+    "id": "logic_02",
+    "category": "sat_boolean",
+    "text": "Quatre amis (P, Q, R, S) doivent former exactement deux equipes de deux pour un tournoi, sachant que P et Q refusent de jouer dans la meme equipe, et que R doit imperativement etre avec S. Donne une affectation valide (vrai si la personne est dans l'equipe 1, faux sinon).",
+    "expected_assignment": null
+  },
+  {
+    "id": "alloc_01",
+    "category": "smt_arithmetic",
+    "text": "Une equipe doit repartir 3 taches entre 2 employes. La tache 1 prend 4h, la tache 2 prend 3h, la tache 3 prend 5h. Chaque employe ne peut pas travailler plus de 8h. Trouve une repartition possible en assignant a chaque tache un employe (1 ou 2).",
+    "expected_assignment": null
+  },
+  {
+    "id": "optim_01",
+    "category": "smt_arithmetic",
+    "text": "Une usine produit des chaises et des tables. Une chaise rapporte 20 euros de profit et necessite 2h de travail. Une table rapporte 50 euros et necessite 5h. L'usine dispose de 40h de travail par jour. Combien de chaises et de tables faut-il produire pour maximiser le profit, sachant qu'on ne peut pas produire plus de 15 chaises par jour ?",
+    "expected_assignment": null
+  }
+]
