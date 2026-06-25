@@ -32,8 +32,16 @@ class CorrectionResult:
     last_error_message: str = ""
 
 
+def _debug_print(debug: bool, *args, **kwargs):
+    if debug:
+        print(*args, **kwargs)
+
+
 def run_correction_loop(
-    problem_text: str, translator, max_attempts: int = 3
+    problem_text: str,
+    translator,
+    max_attempts: int = 3,
+    debug: bool = False,
 ) -> CorrectionResult:
     """Traduit + valide avec re-prompting jusqu'à obtenir un modèle valide."""
     errors: List[ErrorCategory] = []
@@ -48,17 +56,26 @@ def run_correction_loop(
         # 1. Appel au LLM (la traduction elle-même peut échouer).
         try:
             raw = translator.translate(problem_text, error_feedback=feedback)
-        except Exception as exc:  # noqa: BLE001
-            errors.append(ErrorCategory.LLM_MALFORMED_JSON)
+            _debug_print(
+                debug,
+                f"    [DEBUG T{attempt}] Réponse brute du LLM :\n{'-'*60}",
+            )
+            _debug_print(debug, raw)
+            _debug_print(debug, f"{'-'*60}")
+        except Exception as exc:
+            errors.append(ErrorCategory.LLM_RESPONSE_ERROR)
             last_message = f"échec d'appel au modèle : {exc}"
+            _debug_print(debug, f"    [DEBUG T{attempt}] Échec appel LLM : {last_message}")
             feedback = last_message
             continue
 
         # 2. Parsing JSON + conformité Pydantic.
-        model, parse_error = parse_symbolic_model(raw)
+        model, parse_error, parse_category = parse_symbolic_model(raw)
         if model is None:
-            errors.append(ErrorCategory.LLM_MALFORMED_JSON)
+            category = parse_category or ErrorCategory.LLM_MALFORMED_JSON
+            errors.append(category)
             last_message = parse_error or "réponse non conforme"
+            _debug_print(debug, f"    [DEBUG T{attempt}] Échec parsing : {last_message}")
             feedback = last_message
             continue
         last_model = model
@@ -69,6 +86,7 @@ def run_correction_loop(
             if result.category is not None:
                 errors.append(result.category)
             last_message = result.message
+            _debug_print(debug, f"    [DEBUG T{attempt}] Échec validation : {last_message}")
             feedback = (
                 f"Le modèle est invalide ({result.category.value if result.category else '?'}) : "
                 f"{result.message}"
@@ -76,6 +94,7 @@ def run_correction_loop(
             continue
 
         # Succès : modèle valide obtenu.
+        _debug_print(debug, f"    [DEBUG T{attempt}] Modèle valide accepté.")
         return CorrectionResult(
             success=True,
             n_attempts=attempt,
@@ -86,6 +105,7 @@ def run_correction_loop(
         )
 
     # Échec après épuisement des tentatives.
+    _debug_print(debug, f"    [DEBUG] Échec définitif après {attempt} tentative(s).")
     return CorrectionResult(
         success=False,
         n_attempts=attempt,

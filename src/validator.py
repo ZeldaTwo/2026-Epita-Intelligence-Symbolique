@@ -7,7 +7,6 @@ la taxonomie d'erreurs :
 1. analyse AST des contraintes        -> SYNTAX_ERROR / MISSING_VARIABLE
 2. compilation en expressions Z3      -> SYNTAX_ERROR
 3. vérification de typage (booléen)   -> TYPE_MISMATCH
-4. test de satisfiabilité rapide      -> TRIVIALLY_UNSAT
 
 Les helpers `build_z3_vars`, `compile_constraint` et `add_domain_constraints`
 sont réutilisés par `solver_backend.py` pour éviter toute divergence entre la
@@ -17,14 +16,14 @@ sémantique validée et la sémantique résolue.
 from __future__ import annotations
 
 import ast
+import re
 from typing import Dict, Optional, Tuple
 
 import z3
 
 from schema import ErrorCategory, SymbolicModel, ValidationResult
 
-# Fonctions Z3 autorisées dans les expressions de contraintes. Les opérateurs
-# (+, -, *, ==, <, >, ...) sont gérés nativement par la surcharge d'opérateurs Z3.
+# Fonctions Z3 autorisées dans les expressions de contraintes.
 Z3_FUNCTIONS = {
     "And": z3.And,
     "Or": z3.Or,
@@ -49,17 +48,18 @@ def build_z3_vars(model: SymbolicModel) -> Dict[str, z3.ExprRef]:
             z3_vars[v.name] = z3.Real(v.name)
         elif v.type == "Bool":
             z3_vars[v.name] = z3.Bool(v.name)
-        else:  # pragma: no cover - déjà filtré par le schéma Pydantic
+        elif v.type == "Object":
+            raise ValueError(
+                f"type 'Object' non supporté par le backend Z3 (formalism='{model.formalism}' "
+                f"devrait être 'pddl')"
+            )
+        else:
             raise ValueError(f"type de variable inconnu : {v.type}")
     return z3_vars
 
 
 def compile_constraint(expr_str: str, z3_vars: Dict[str, z3.ExprRef]) -> z3.ExprRef:
-    """Compile une chaîne de contrainte en expression Z3.
-
-    L'évaluation se fait dans un espace de noms restreint (pas de `__builtins__`)
-    contenant uniquement les variables déclarées et les fonctions Z3 autorisées.
-    """
+    """Compile une chaîne de contrainte en expression Z3."""
     namespace: Dict[str, object] = {"__builtins__": {}}
     namespace.update(Z3_FUNCTIONS)
     namespace.update(z3_vars)
@@ -81,6 +81,73 @@ def _collect_names(tree: ast.AST) -> set[str]:
     return {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
 
 
+# --------------------------------------------------------------------------- #
+# Helpers PDDL (partagés avec solver_backend)
+# --------------------------------------------------------------------------- #
+
+def _safe_pddl_parse(expr_str: str):
+    """Parse une expression PDDL en remplaçant temporairement les variables ?x."""
+    mapping: Dict[str, str] = {}
+
+    def repl(m: re.Match) -> str:
+        var = m.group(0)
+        safe = "_VAR_" + var[1:]
+        mapping[safe] = var
+        return safe
+
+    safe_str = re.sub(r"\?\w+", repl, expr_str)
+    tree = ast.parse(safe_str.strip(), mode="eval")
+
+    def ast_to_pddl(node):
+        if isinstance(node, ast.Call):
+            func_name = node.func.id if isinstance(node.func, ast.Name) else str(node.func)
+            args = [ast_to_pddl(arg) for arg in node.args]
+            if func_name in ("And", "Or", "Not"):
+                return (func_name.upper(),) + tuple(args)
+            return (func_name,) + tuple(args)
+        if isinstance(node, ast.Name):
+            return mapping.get(node.id, node.id)
+        if isinstance(node, ast.Constant):
+            return node.value
+        raise ValueError(f"noeud AST non supporté : {type(node)}")
+
+    return ast_to_pddl(tree.body)
+
+
+def _validate_pddl(model: SymbolicModel) -> Tuple[ValidationResult, Optional[Dict[str, z3.ExprRef]]]:
+    """Valide un modèle PDDL (syntaxe des actions, présence des champs)."""
+    msgs = []
+    if not model.init:
+        msgs.append("init manquant ou vide")
+    if not model.goal:
+        msgs.append("goal manquant ou vide")
+    if not model.actions:
+        msgs.append("actions manquantes ou vides")
+
+    for action in (model.actions or []):
+        try:
+            _safe_pddl_parse(action.precondition)
+            _safe_pddl_parse(action.effect)
+        except Exception as exc:
+            msgs.append(f"action '{action.name}' : syntaxe invalide ({exc})")
+
+    if msgs:
+        return (
+            ValidationResult(
+                is_valid=False,
+                category=ErrorCategory.SYNTAX_ERROR,
+                message="; ".join(msgs),
+            ),
+            None,
+        )
+
+    return ValidationResult(is_valid=True, message="modèle PDDL valide"), None
+
+
+# --------------------------------------------------------------------------- #
+# Validation principale
+# --------------------------------------------------------------------------- #
+
 def validate(
     model: SymbolicModel,
 ) -> Tuple[ValidationResult, Optional[Dict[str, z3.ExprRef]]]:
@@ -90,6 +157,9 @@ def validate(
     vaut `None`. En cas de succès, `z3_vars` contient les variables Z3 prêtes
     à être réutilisées par le solveur.
     """
+    if model.formalism == "pddl":
+        return _validate_pddl(model)
+
     declared = {v.name for v in model.variables}
     allowed_names = declared | set(Z3_FUNCTIONS)
 
@@ -126,7 +196,7 @@ def validate(
     for constraint in model.constraints:
         try:
             expr = compile_constraint(constraint, z3_vars)
-        except Exception as exc:  # noqa: BLE001 - on classe toute erreur de compile
+        except Exception as exc:  # noqa: BLE001
             return (
                 ValidationResult(
                     is_valid=False,
@@ -148,20 +218,5 @@ def validate(
                 None,
             )
         compiled.append(expr)
-
-    # --- Passe 4 : satisfiabilité (contraintes mutuellement contradictoires) ---
-    checker = z3.Solver()
-    add_domain_constraints(checker, model, z3_vars)
-    for expr in compiled:
-        checker.add(expr)
-    if checker.check() == z3.unsat:
-        return (
-            ValidationResult(
-                is_valid=False,
-                category=ErrorCategory.TRIVIALLY_UNSAT,
-                message="les contraintes sont mutuellement contradictoires (UNSAT)",
-            ),
-            None,
-        )
 
     return ValidationResult(is_valid=True, message="modèle valide"), z3_vars

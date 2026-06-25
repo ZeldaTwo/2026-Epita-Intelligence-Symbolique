@@ -3,7 +3,7 @@ Orchestration bout-en-bout du pipeline LLM-as-a-reasoner :
 
     [NL] -> traduction (avec boucle de correction)
          -> validation
-         -> résolution Z3
+         -> résolution
          -> interprétation en langage naturel
 
 Renvoie un `PipelineOutput` contenant à la fois la réponse finale et une trace
@@ -38,10 +38,14 @@ def run_pipeline(
     translator,
     max_correction_attempts: int = 3,
     use_llm_for_interpretation: bool = True,
+    debug: bool = False,
 ) -> PipelineOutput:
     """Exécute le pipeline complet sur un énoncé."""
     correction = run_correction_loop(
-        problem_text, translator, max_attempts=max_correction_attempts
+        problem_text,
+        translator,
+        max_attempts=max_correction_attempts,
+        debug=debug,
     )
 
     # Cas 1 : on n'a jamais obtenu de modèle valide.
@@ -66,14 +70,30 @@ def run_pipeline(
             solver_result=None,
         )
 
-    # Cas 2 : modèle valide -> résolution.
+    # Cas 2 : modèle valide -> résolution selon le formalisme.
     model = correction.model
     result = solve(model)
 
-    if result.status == "SAT":
-        final_status, succeeded = "SAT", True
+    # Détermination du statut final avec vérification de cohérence.
+    if model.expected_status == "UNSAT":
+        if result.status == "UNSAT":
+            final_status, succeeded = "UNSAT_PROVEN", True
+        elif result.status == "SAT":
+            # Le LLM a mal traduit : le modèle est faussement satisfiable
+            final_status, succeeded = "UNSAT_BUT_SAT", False
+            # Forcer le message d'erreur pour la boucle de correction
+            feedback = (
+                f"Le modèle est SAT (solution trouvée : {result.assignment}) "
+                f"alors que l'énoncé attend UNSAT. Les contraintes sont "
+                f"probablement incomplètes. Vérifie que toutes les conditions "
+                f"de l'énoncé sont traduites sans simplification."
+            )
+            # On pourrait relancer la boucle ici, mais pour l'instant on marque l'échec
+        else:
+            final_status, succeeded = result.status, False
+    elif result.status in ("SAT", "PDDL_PARSED"):
+        final_status, succeeded = result.status, True
     elif result.status == "UNSAT":
-        # Réponse définitive et fidèle : le problème n'admet pas de solution.
         final_status, succeeded = "UNSAT", True
     else:
         final_status, succeeded = result.status, False

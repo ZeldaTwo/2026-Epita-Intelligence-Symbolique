@@ -1,44 +1,112 @@
 [
   {
-    "id": "arith_01",
-    "category": "smt_arithmetic",
-    "text": "Alice a trois fois plus de billes que Bob. Ensemble, ils ont 40 billes. Combien de billes Bob a-t-il ?",
-    "expected_assignment": {"bob": 10, "alice": 30}
+    "id": "SAT_COMPLEX_01_PIGEONHOLE_4_3",
+    "text": "Quatre invités (A, B, C, D) doivent être répartis dans seulement trois chambres (1, 2, 3). Chaque invité doit avoir au moins une chambre. Deux invités ne peuvent pas partager la même chambre. Est-ce possible de trouver une configuration valide ?",
+    "category": "sat_combinatorics"
   },
   {
-    "id": "arith_02",
-    "category": "smt_arithmetic",
-    "text": "Un fermier a des poules et des lapins. Il compte 35 têtes et 94 pattes au total. Combien y a-t-il de poules et de lapins ?",
-    "expected_assignment": {"poules": 23, "lapins": 12}
+    "id": "SAT_COMPLEX_02_KNIGHTS_KNAVES_A",
+    "text": "Sur une île magique, chaque habitant est soit un Chevalier (qui dit toujours la vérité), soit un Valet (qui ment toujours). L'habitant A dit : 'Au moins l'un de nous deux est un Valet'. L'habitant B ne dit rien. Déterminez si A et B sont des Chevaliers ou des Valets.",
+    "category": "sat_pure_logic"
   },
   {
-    "id": "arith_03",
-    "category": "smt_arithmetic",
-    "text": "Le prix d'un livre plus celui d'un stylo fait 22 euros. Le livre coute 18 euros de plus que le stylo. Quel est le prix du stylo ?",
-    "expected_assignment": {"stylo": 2, "livre": 20}
+    "id": "SAT_COMPLEX_03_KNIGHTS_KNAVES_B",
+    "text": "Trois habitants (X, Y, Z) discutent. X dit : 'Nous sommes tous des Valets (menteurs)'. Y dit : 'Exactement un d'entre nous est un Chevalier'. Z ne dit rien. Modélisez le système pour trouver leurs identités réelles.",
+    "category": "sat_pure_logic"
   },
   {
-    "id": "logic_01",
-    "category": "sat_boolean",
-    "text": "Trois suspects A, B et C sont interroges. On sait que : si A est coupable alors B est innocent. Si B est coupable alors C est coupable. Au moins un des trois est coupable. C est innocent. Qui est coupable ?",
-    "expected_assignment": {"c_coupable": false}
+    "id": "SAT_COMPLEX_04_CHINESE_POSTMAN_MINI",
+    "text": "Un facteur doit visiter trois intersections A, B et C reliées en boucle. Le chemin de A à B est à sens unique. Le chemin de B à C est à double sens. Le chemin de C à A est coupé. On cherche à savoir s'il existe un circuit fermé valide passant par toutes les rues ouvertes une seule fois.",
+    "category": "sat_graph_theory"
   },
   {
-    "id": "logic_02",
-    "category": "sat_boolean",
-    "text": "Quatre amis (P, Q, R, S) doivent former exactement deux equipes de deux pour un tournoi, sachant que P et Q refusent de jouer dans la meme equipe, et que R doit imperativement etre avec S. Donne une affectation valide (vrai si la personne est dans l'equipe 1, faux sinon).",
-    "expected_assignment": null
+    "id": "SAT_COMPLEX_05_GRAPH_4_COLORING_FAIL",
+    "text": "Soit un graphe complet de 4 sommets (A, B, C, D) où chaque sommet est connecté à tous les autres. Nous n'avons que 3 couleurs : Rouge, Vert, Bleu. Deux sommets interconnectés ne peuvent pas partager la même couleur. Prouvez que ce problème est impossible (UNSAT).",
+    "category": "sat_graph_theory"
   },
   {
-    "id": "alloc_01",
-    "category": "smt_arithmetic",
-    "text": "Une equipe doit repartir 3 taches entre 2 employes. La tache 1 prend 4h, la tache 2 prend 3h, la tache 3 prend 5h. Chaque employe ne peut pas travailler plus de 8h. Trouve une repartition possible en assignant a chaque tache un employe (1 ou 2).",
-    "expected_assignment": null
+    "id": "SAT_COMPLEX_06_N_QUEENS_MINI",
+    "text": "Sur un mini-échiquier de 3x3, on veut placer 3 reines. Deux reines ne peuvent pas être sur la même ligne ni sur la même colonne. De plus, elles ne peuvent pas être sur une même diagonale. Est-ce possible ?",
+    "category": "sat_games"
   },
   {
-    "id": "optim_01",
-    "category": "smt_arithmetic",
-    "text": "Une usine produit des chaises et des tables. Une chaise rapporte 20 euros de profit et necessite 2h de travail. Une table rapporte 50 euros et necessite 5h. L'usine dispose de 40h de travail par jour. Combien de chaises et de tables faut-il produire pour maximiser le profit, sachant qu'on ne peut pas produire plus de 15 chaises par jour ?",
-    "expected_assignment": null
+    "id": "SAT_COMPLEX_07_MINI_SUDOKU_2X2",
+    "text": "Une grille 2x2 contient des variables booléennes représentant la présence du chiffre 1. La case(1,1) ou la case(1,2) contient un 1. La case(2,1) ou la case(2,2) contient un 1. Les colonnes doivent aussi contenir au moins un 1. Sachant que la case(1,1) est fausse, déduisez le reste.",
+    "category": "sat_games"
+  },
+  {
+    "id": "SAT_COMPLEX_08_SCHEDULING_STRICT",
+    "text": "Deux tâches, T1 et T2, doivent être planifiées le Matin ou l'Après-midi. T1 ne peut pas se dérouler l'Après-midi si T2 a lieu le Matin. T2 ne peut pas avoir lieu le Matin si T1 a lieu le Matin. T1 doit impérativement être planifiée. Trouvez un créneau.",
+    "category": "sat_planning"
+  },
+  {
+    "id": "SAT_COMPLEX_09_CIRCUIT_FAULT",
+    "text": "Un circuit logique a deux entrées (In1, In2) et une sortie Out. Out est calculé par un composant défectueux qui fait l'inverse d'un ET logique (NAND). On affirme que si In1 est vrai, alors Out est forcément faux. Trouvez un contre-exemple pour prouver que cette affirmation est fausse.",
+    "category": "sat_hardware_verification"
+  },
+  {
+    "id": "SAT_COMPLEX_10_EINSTEIN_MINI",
+    "text": "Il y a deux maisons (M1, M2), une rouge et une bleue. Deux personnes, un Anglais et un Espagnol, y vivent. L'Anglais ne vit pas dans la maison rouge. L'Espagnol vit à côté de l'Anglais. La maison M1 est rouge. Où vit l'Espagnol ?",
+    "category": "sat_pure_logic"
+  },
+  {
+    "id": "SAT_COMPLEX_11_DEPENDENCY_HELL",
+    "text": "Un logiciel requiert l'installation de paquets. Si le Paquet_A est installé, le Paquet_B doit l'être aussi. Si le Paquet_B est installé, le Paquet_C ou le Paquet_D doit l'être. Si le Paquet_D est installé, le Paquet_A ne doit pas l'être. On veut installer le Paquet_A et le Paquet_D ensemble. Est-ce possible ?",
+    "category": "sat_software_verification"
+  },
+  {
+    "id": "SAT_COMPLEX_12_RAMSEY_THEORY_MINI",
+    "text": "Parmi un groupe de 4 personnes (A, B, C, D), deux personnes sont soit amies soit ennemies. On veut configurer les relations de sorte qu'il n'y ait aucun groupe de 3 personnes qui soient toutes amies en même temps, et aucun groupe de 3 personnes toutes ennemies en même temps.",
+    "category": "sat_combinatorics"
+  },
+  {
+    "id": "SAT_COMPLEX_13_CRYPTOGRAPHY_KEY_ATTACK",
+    "text": "Un système utilise trois clés de chiffrement secrètes K1, K2, K3 (booléennes). Pour que le système soit sécurisé, il faut que K1 soit différente de K2, que K2 implique K3, et que le XOR entre K1 et K3 soit faux. Si K3 est fausse, le système est-il compromis ?",
+    "category": "sat_cryptography"
+  },
+  {
+    "id": "SAT_COMPLEX_14_SOCIAL_DISTANCING",
+    "text": "Trois bureaux alignés (B1, B2, B3) accueillent des employés. Si B1 est occupé, B2 doit rester libre. Si B3 est occupé, B2 doit rester libre. On veut impérativement occuper le bureau B1 et le bureau B3 en même temps, tout en plaçant un employé en B2. Trouvez la faille.",
+    "category": "sat_planning"
+  },
+  {
+    "id": "SAT_COMPLEX_15_ROBOT_NAVIGATION",
+    "text": "Un robot est dans une pièce avec deux portes (P1, P2). Il peut être à l'état 'Intérieur' ou 'Extérieur'. S'il passe par P1, son état change (Xor). S'il passe par P2, son état change aussi. Le robot passe par P1 puis par P2. Prouvez que son état final est identique à son état initial.",
+    "category": "sat_planning"
+  },
+  {
+    "id": "SAT_COMPLEX_16_TRAFFIC_LIGHTS",
+    "text": "À un croisement, le feu A et le feu B ne peuvent pas être verts en même temps. Si le feu A n'est pas vert, alors le feu C doit être vert. De plus, le feu B et le feu C ne doivent jamais être fonctionnels ensemble. Est-il possible que le feu B soit vert ?",
+    "category": "sat_hardware_verification"
+  },
+  {
+    "id": "SAT_COMPLEX_17_COMMITTEE_SELECTION",
+    "text": "Pour former un comité, on choisit parmi Paul, Marie et Julie. Si Paul est choisi, Marie doit être exclue. Si Marie est exclue, Julie doit être choisie. Si Julie est choisie, Paul doit être exclu. Est-il possible de former ce comité en incluant Paul ?",
+    "category": "sat_combinatorics"
+  },
+  {
+    "id": "SAT_COMPLEX_18_LOGIC_GATE_CHAIN",
+    "text": "On enchaîne trois portes logiques. La première prend X et Y et renvoie un AND. La deuxième prend le résultat précédent et Z, et applique un OR. La troisième prend ce dernier résultat et applique un NOT. On veut que la sortie finale soit vraie. Quelles doivent être les valeurs de X, Y et Z ?",
+    "category": "sat_hardware_verification"
+  },
+  {
+    "id": "SAT_COMPLEX_19_NETWORK_ROUTING",
+    "text": "Un paquet réseau peut transiter par le nœud R1, R2 ou R3. Si le paquet passe par R1, il passe aussi par R2. S'il passe par R2, il ne peut pas passer par R3. On sait que le paquet est passé par R3. Est-il possible qu'il soit aussi passé par R1 ?",
+    "category": "sat_graph_theory"
+  },
+  {
+    "id": "SAT_COMPLEX_20_PRODUCTION_LINE",
+    "text": "Une usine fabrique des objets. Si la machine A fonctionne, la machine B doit fonctionner. Si la machine B fonctionne, la ligne de sécurité C est activée. On observe que la ligne de sécurité C est coupée (fausse). Que peut-on en déduire pour la machine A ?",
+    "category": "sat_planning"
+  },
+  {
+    "id": "SAT_COMPLEX_21_GRID_PATH_MINI",
+    "text": "Sur une grille de 2x2 cases, un joueur part de la case (1,1) pour aller à la case (2,2). Il ne peut se déplacer que vers la droite ou vers le bas. La case (1,2) est bloquée par un obstacle. Modélisez le choix logique pour prouver qu'il n'existe qu'un seul chemin unique possible.",
+    "category": "sat_graph_theory"
+  },
+  {
+    "id": "SAT_COMPLEX_22_VOTING_PARADOX",
+    "text": "Trois juges (1, 2, 3) votent Oui ou Non. La décision finale est Oui si la majorité vote Oui. Le juge 1 vote l'inverse du juge 2. Le juge 2 vote la même chose que le juge 3. Si le juge 3 vote Non, quelle est la décision finale majoritaire du comité ?",
+    "category": "sat_pure_logic"
   }
 ]
