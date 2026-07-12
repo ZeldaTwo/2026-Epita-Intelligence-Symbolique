@@ -25,6 +25,8 @@ from translator import LLMTranslator  # noqa: E402
 
 DEFAULT_DATASET = Path(__file__).resolve().parent / "datasets" / "sample_problems.json"
 
+NB_ATTEMPTS = 5
+
 
 def load_dataset(path: Path) -> list[dict]:
     with open(path, encoding="utf-8") as f:
@@ -34,7 +36,7 @@ def load_dataset(path: Path) -> list[dict]:
 def run_benchmark(
     dataset_path: Path,
     model_name: str,
-    max_correction_attempts: int = 3,
+    max_correction_attempts: int = NB_ATTEMPTS,
     use_llm_for_interpretation: bool = True,
     host: str | None = None,
     debug: bool = False,

@@ -41,6 +41,7 @@ def run_pipeline(
     debug: bool = False,
 ) -> PipelineOutput:
     """Exécute le pipeline complet sur un énoncé."""
+    
     correction = run_correction_loop(
         problem_text,
         translator,
