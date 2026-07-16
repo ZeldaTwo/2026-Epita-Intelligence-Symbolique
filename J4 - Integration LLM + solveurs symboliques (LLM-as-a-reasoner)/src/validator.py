@@ -7,10 +7,6 @@ la taxonomie d'erreurs :
 1. analyse AST des contraintes        -> SYNTAX_ERROR / MISSING_VARIABLE
 2. compilation en expressions Z3      -> SYNTAX_ERROR
 3. vérification de typage (booléen)   -> TYPE_MISMATCH
-
-Les helpers `build_z3_vars`, `compile_constraint` et `add_domain_constraints`
-sont réutilisés par `solver_backend.py` pour éviter toute divergence entre la
-sémantique validée et la sémantique résolue.
 """
 
 from __future__ import annotations
@@ -63,7 +59,7 @@ def compile_constraint(expr_str: str, z3_vars: Dict[str, z3.ExprRef]) -> z3.Expr
     namespace: Dict[str, object] = {"__builtins__": {}}
     namespace.update(Z3_FUNCTIONS)
     namespace.update(z3_vars)
-    return eval(expr_str, namespace)  # noqa: S307 - espace de noms contrôlé
+    return eval(expr_str, namespace)
 
 
 def add_domain_constraints(
