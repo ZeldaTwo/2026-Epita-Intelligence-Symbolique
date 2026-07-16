@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
+from config import get_default_max_attempts
 from schema import ErrorCategory, SymbolicModel
 from translator import parse_symbolic_model
 from validator import validate
@@ -40,10 +41,16 @@ def _debug_print(debug: bool, *args, **kwargs):
 def run_correction_loop(
     problem_text: str,
     translator,
-    max_attempts: int = 3,
+    max_attempts: Optional[int] = None,
     debug: bool = False,
 ) -> CorrectionResult:
-    """Traduit + valide avec re-prompting jusqu'à obtenir un modèle valide."""
+    """Traduit + valide avec re-prompting jusqu'à obtenir un modèle valide.
+
+    `max_attempts=None` -> valeur par défaut centralisée (config, surchargeable
+    par la variable d'environnement LLM_REASONER_MAX_ATTEMPTS).
+    """
+    if max_attempts is None:
+        max_attempts = get_default_max_attempts()
     errors: List[ErrorCategory] = []
     feedback: Optional[str] = None
     last_model: Optional[SymbolicModel] = None

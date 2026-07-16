@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
+from config import get_default_max_attempts
 from correction_loop import run_correction_loop
 from error_taxonomy import PipelineRunRecord
 from interpreter import interpret_with_llm, interpret_without_llm
@@ -36,12 +37,18 @@ def run_pipeline(
     problem_id: str,
     problem_text: str,
     translator,
-    max_correction_attempts: int = 3,
+    max_correction_attempts: Optional[int] = None,
     use_llm_for_interpretation: bool = True,
     debug: bool = False,
 ) -> PipelineOutput:
-    """Exécute le pipeline complet sur un énoncé."""
-    
+    """Exécute le pipeline complet sur un énoncé.
+
+    `max_correction_attempts=None` -> valeur par défaut centralisée (config,
+    surchargeable par la variable d'environnement LLM_REASONER_MAX_ATTEMPTS).
+    """
+    if max_correction_attempts is None:
+        max_correction_attempts = get_default_max_attempts()
+
     correction = run_correction_loop(
         problem_text,
         translator,
