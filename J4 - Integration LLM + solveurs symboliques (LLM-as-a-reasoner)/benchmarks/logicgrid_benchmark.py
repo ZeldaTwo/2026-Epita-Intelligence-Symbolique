@@ -52,6 +52,7 @@ import z3
 SRC_DIR = Path(__file__).resolve().parent.parent / "src"
 sys.path.insert(0, str(SRC_DIR))
 
+from config import get_default_max_attempts  # noqa: E402
 from error_taxonomy import ErrorTaxonomyAnalyzer  # noqa: E402
 from pipeline import run_pipeline  # noqa: E402
 from schema import SymbolicModel, Variable  # noqa: E402
@@ -179,10 +180,12 @@ def count_solutions(model: SymbolicModel, limit: int = 2) -> int | None:
 # --------------------------------------------------------------------------- #
 def run_logicgrid_benchmark(
     model_name: str,
-    max_correction_attempts: int = 4,
+    max_correction_attempts: int | None = None,
     host: str | None = None,
     debug: bool = False,
 ) -> tuple[list[dict], ErrorTaxonomyAnalyzer]:
+    if max_correction_attempts is None:
+        max_correction_attempts = get_default_max_attempts()
     translator = LLMTranslator(model_name=model_name, host=host)
     analyzer = ErrorTaxonomyAnalyzer()
     detailed: list[dict] = []
@@ -336,8 +339,8 @@ def main():
     parser = argparse.ArgumentParser(description="Benchmark LogicGrid (LLM-as-a-reasoner)")
     parser.add_argument("--model", default="qwen2.5-coder", help="Modèle Ollama installé")
     parser.add_argument("--host", default=None, help="URL du serveur Ollama")
-    parser.add_argument("--max-attempts", type=int, default=4,
-                        help="Nombre max de tentatives de correction")
+    parser.add_argument("--max-attempts", type=int, default=get_default_max_attempts(),
+                        help="Nombre max de tentatives de correction (défaut : env LLM_REASONER_MAX_ATTEMPTS ou 5)")
     parser.add_argument("--debug", action="store_true",
                         help="Affiche les réponses brutes du LLM")
     parser.add_argument("--output", default=None, help="Fichier JSON de sortie")

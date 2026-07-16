@@ -19,13 +19,12 @@ from pathlib import Path
 SRC_DIR = Path(__file__).resolve().parent.parent / "src"
 sys.path.insert(0, str(SRC_DIR))
 
+from config import get_default_max_attempts  # noqa: E402
 from error_taxonomy import ErrorTaxonomyAnalyzer  # noqa: E402
 from pipeline import run_pipeline  # noqa: E402
 from translator import LLMTranslator  # noqa: E402
 
 DEFAULT_DATASET = Path(__file__).resolve().parent / "datasets" / "sample_problems.json"
-
-NB_ATTEMPTS = 5
 
 
 def load_dataset(path: Path) -> list[dict]:
@@ -36,11 +35,13 @@ def load_dataset(path: Path) -> list[dict]:
 def run_benchmark(
     dataset_path: Path,
     model_name: str,
-    max_correction_attempts: int = NB_ATTEMPTS,
+    max_correction_attempts: int | None = None,
     use_llm_for_interpretation: bool = True,
     host: str | None = None,
     debug: bool = False,
 ) -> tuple[list[dict], ErrorTaxonomyAnalyzer]:
+    if max_correction_attempts is None:
+        max_correction_attempts = get_default_max_attempts()
     problems = load_dataset(dataset_path)
     translator = LLMTranslator(model_name=model_name, host=host)
     analyzer = ErrorTaxonomyAnalyzer()
@@ -123,7 +124,8 @@ def main():
     parser.add_argument("--model", default="qwen2.5-coder", help="Nom du modèle Ollama installé")
     parser.add_argument("--host", default=None, help="URL du serveur Ollama (défaut: localhost:11434)")
     parser.add_argument("--dataset", default=str(DEFAULT_DATASET), help="Chemin du dataset JSON")
-    parser.add_argument("--max-attempts", type=int, default=3, help="Nombre max de tentatives de correction")
+    parser.add_argument("--max-attempts", type=int, default=get_default_max_attempts(),
+                        help="Nombre max de tentatives de correction (défaut : env LLM_REASONER_MAX_ATTEMPTS ou 5)")
     parser.add_argument("--no-llm-interpretation", action="store_true",
                          help="Désactive l'interprétation LLM (repli textuel brut, plus rapide pour les tests)")
     parser.add_argument("--debug", action="store_true",
