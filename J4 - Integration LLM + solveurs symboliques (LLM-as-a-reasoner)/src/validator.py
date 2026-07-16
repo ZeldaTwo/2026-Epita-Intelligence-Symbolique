@@ -81,6 +81,39 @@ def _collect_names(tree: ast.AST) -> set[str]:
     return {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
 
 
+# Mots-clés booléens Python -> fonction Z3 équivalente.
+# Ces mots-clés ne fonctionnent PAS sur des expressions Z3 symboliques : Python
+# tente de les convertir en booléen concret et lève
+# « Symbolic expressions cannot be cast to concrete Boolean values ».
+_PYTHON_BOOL_OP_HINTS = {
+    ast.And: "'and' -> utilise And(a, b, ...)",
+    ast.Or: "'or' -> utilise Or(a, b, ...)",
+    ast.Not: "'not' -> utilise Not(a)",
+}
+
+
+def _detect_python_bool_operators(tree: ast.AST) -> list[str]:
+    """Repère l'usage des mots-clés booléens Python (and / or / not).
+
+    Renvoie la liste (ordonnée, sans doublon) des indices de correction à
+    fournir au LLM. Cette détection en amont transforme une erreur Z3 cryptique
+    (levée plus tard à la compilation) en un message ACTIONNABLE, ce qui permet
+    à la boucle de correction de converger.
+    """
+    hints: list[str] = []
+    for node in ast.walk(tree):
+        op_type = None
+        if isinstance(node, ast.BoolOp):  # 'and' / 'or'
+            op_type = type(node.op)
+        elif isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):  # 'not'
+            op_type = ast.Not
+        if op_type is not None:
+            hint = _PYTHON_BOOL_OP_HINTS[op_type]
+            if hint not in hints:
+                hints.append(hint)
+    return hints
+
+
 # --------------------------------------------------------------------------- #
 # Helpers PDDL (partagés avec solver_backend)
 # --------------------------------------------------------------------------- #
@@ -176,6 +209,26 @@ def validate(
                 ),
                 None,
             )
+
+        # Détection des opérateurs booléens Python (and / or / not) AVANT la
+        # compilation Z3 : sans ça, l'erreur remonte sous une forme cryptique
+        # (« cannot be cast to concrete Boolean values ») qui n'indique pas au
+        # LLM quoi corriger, et la boucle de correction tourne en rond.
+        bool_op_hints = _detect_python_bool_operators(tree)
+        if bool_op_hints:
+            return (
+                ValidationResult(
+                    is_valid=False,
+                    category=ErrorCategory.SYNTAX_ERROR,
+                    message=(
+                        f"contrainte '{constraint}' : les mots-clés booléens "
+                        f"Python sont interdits. Remplace-les par les fonctions "
+                        f"Z3 correspondantes ({'; '.join(bool_op_hints)})."
+                    ),
+                ),
+                None,
+            )
+
         for name in _collect_names(tree):
             if name not in allowed_names:
                 return (
