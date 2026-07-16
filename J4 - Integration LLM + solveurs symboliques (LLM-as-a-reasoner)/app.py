@@ -30,6 +30,7 @@ if MODULES_DIR and MODULES_DIR not in sys.path:
 # 2. Imports (avec fallback explicite)
 # =============================================================================
 try:
+    from config import get_default_max_attempts
     from translator import LLMTranslator, parse_symbolic_model
     from validator import validate
     from solver_backend import solve
@@ -100,7 +101,10 @@ st.markdown("""
 with st.sidebar:
     st.markdown("### ⚙️ Configuration")
     model_name = st.text_input("Modèle Ollama", value="qwen2.5-coder")
-    max_attempts = st.slider("Tentatives max", 1, 5, 3)
+    _default_attempts = get_default_max_attempts()
+    _slider_max = max(10, _default_attempts)
+    max_attempts = st.slider("Tentatives max", 1, _slider_max,
+                             min(_default_attempts, _slider_max))
     use_llm_interp = st.toggle("Interprétation LLM", value=True)
     st.divider()
     st.caption("Pipeline IA Symbolique — v1.0")

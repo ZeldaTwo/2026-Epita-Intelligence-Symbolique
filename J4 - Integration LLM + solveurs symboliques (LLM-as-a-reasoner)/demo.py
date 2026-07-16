@@ -17,6 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
+from config import get_default_max_attempts  # noqa: E402
 from pipeline import run_pipeline  # noqa: E402
 from translator import LLMTranslator  # noqa: E402
 
@@ -26,7 +27,8 @@ def main():
     parser.add_argument("problem", help="Énoncé du problème en langage naturel")
     parser.add_argument("--model", default="qwen2.5-coder", help="Modèle Ollama à utiliser")
     parser.add_argument("--host", default=None, help="URL du serveur Ollama")
-    parser.add_argument("--max-attempts", type=int, default=4)
+    parser.add_argument("--max-attempts", type=int, default=get_default_max_attempts(),
+                        help="Tentatives de correction (défaut : env LLM_REASONER_MAX_ATTEMPTS ou 5)")
     parser.add_argument("--verbose", action="store_true", help="Affiche le modèle symbolique et le résultat brut")
     args = parser.parse_args()
 
