@@ -193,6 +193,27 @@ def validate(
     if model.formalism == "pddl":
         return _validate_pddl(model)
 
+    # Cohérence type/formalisme : le type 'Object' est réservé à PDDL. S'il
+    # apparaît dans un modèle sat/smt/csp, c'est une erreur de traduction. On la
+    # rend explicite et CORRIGEABLE (message actionnable pour la boucle de
+    # correction) au lieu de laisser build_z3_vars lever une exception qui
+    # ferait planter tout le pipeline.
+    object_vars = [v.name for v in model.variables if v.type == "Object"]
+    if object_vars:
+        return (
+            ValidationResult(
+                is_valid=False,
+                category=ErrorCategory.TYPE_MISMATCH,
+                message=(
+                    f"la/les variable(s) {object_vars} sont de type 'Object', "
+                    f"réservé au formalisme 'pddl'. Pour un modèle "
+                    f"'{model.formalism}', déclare chaque variable en 'Int' "
+                    f"(avec un 'domain' [min, max] pour un CSP), 'Bool' ou 'Real'."
+                ),
+            ),
+            None,
+        )
+
     declared = {v.name for v in model.variables}
     allowed_names = declared | set(Z3_FUNCTIONS)
 
@@ -244,7 +265,17 @@ def validate(
                 )
 
     # --- Passe 2 + 3 : compilation Z3 + typage booléen ---
-    z3_vars = build_z3_vars(model)
+    try:
+        z3_vars = build_z3_vars(model)
+    except Exception as exc:  # noqa: BLE001 - filet de sécurité anti-crash
+        return (
+            ValidationResult(
+                is_valid=False,
+                category=ErrorCategory.TYPE_MISMATCH,
+                message=f"construction des variables Z3 impossible : {exc}",
+            ),
+            None,
+        )
     compiled: list[z3.ExprRef] = []
     for constraint in model.constraints:
         try:
