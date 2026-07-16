@@ -1,24 +1,4 @@
 """
-Benchmark LogicGrid pour le pipeline LLM-as-a-reasoner (sujet J4).
-
-Pourquoi un banc d'essai dédié aux grilles logiques ?
-------------------------------------------------------
-Les énigmes de type "logic grid" (grilles logiques à la Einstein/Zebra :
-associer des personnes à des attributs sous un jeu d'indices) possèdent, par
-construction, une **solution unique**. Cette propriété en fait un excellent
-révélateur de la QUALITÉ DE TRADUCTION du LLM vers le modèle symbolique :
-
-  - Traduction FIDÈLE  -> le solveur trouve exactement UNE solution.
-  - Traduction qui OMET une contrainte (erreur de sous-spécification, l'une des
-    erreurs les plus fréquentes de la taxonomie) -> le modèle devient
-    sur-satisfiable : PLUSIEURS solutions coexistent.
-
-Le point clé : le test d'unicité est une **vérité-terrain robuste et
-indépendante du nommage** choisi par le LLM. On n'a pas besoin de savoir
-comment le LLM a nommé ses variables ni comment il a encodé les catégories :
-on énumère simplement les solutions du modèle produit (via une clause de
-blocage + re-résolution Z3) et on vérifie qu'il y en a exactement une. C'est
-donc un signal exploitable même sans corrigé formel encodé à la main.
 
 Métriques produites par puzzle :
   1. formalisme choisi par le LLM         (attendu : "csp")
@@ -63,11 +43,6 @@ from validator import (  # noqa: E402
     compile_constraint,
 )
 
-# --------------------------------------------------------------------------- #
-# Dataset : grilles logiques à solution unique (énoncés en langage naturel).
-# Le champ "solution" documente le corrigé humain (référence de lecture,
-# NON utilisé par le check automatique qui repose sur l'unicité).
-# --------------------------------------------------------------------------- #
 LOGIC_GRID_PROBLEMS: list[dict] = [
     {
         "id": "LG_01_ANIMALS",
@@ -137,9 +112,6 @@ LOGIC_GRID_PROBLEMS: list[dict] = [
 ]
 
 
-# --------------------------------------------------------------------------- #
-# Moteur de vérité-terrain : énumération des solutions d'un SymbolicModel.
-# --------------------------------------------------------------------------- #
 def count_solutions(model: SymbolicModel, limit: int = 2) -> int | None:
     """Compte les solutions distinctes d'un modèle Z3, bornées par `limit`.
 
@@ -175,9 +147,6 @@ def count_solutions(model: SymbolicModel, limit: int = 2) -> int | None:
     return count
 
 
-# --------------------------------------------------------------------------- #
-# Exécution du benchmark
-# --------------------------------------------------------------------------- #
 def run_logicgrid_benchmark(
     model_name: str,
     max_correction_attempts: int | None = None,
@@ -294,9 +263,7 @@ def build_summary(detailed: list[dict], analyzer: ErrorTaxonomyAnalyzer) -> dict
     }
 
 
-# --------------------------------------------------------------------------- #
-# Auto-test du moteur d'unicité (sans LLM ni Ollama)
-# --------------------------------------------------------------------------- #
+
 def self_check() -> None:
     """Prouve que le moteur d'unicité distingue bien 1 solution de plusieurs."""
     print("=== Auto-test du moteur d'unicité (aucun LLM requis) ===\n")
