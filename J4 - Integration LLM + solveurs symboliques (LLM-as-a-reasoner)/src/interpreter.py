@@ -11,10 +11,19 @@ valeurs fournies, sans en inventer. Sois concis (1 à 3 phrases)."""
 
 def _format_result_for_prompt(result: SolverResult, model: SymbolicModel) -> str:
     if result.status == "PDDL_PARSED":
-        lines = ["Le modèle de planification PDDL a été extrait avec succès :"]
-        lines.append(f"  - État initial : {result.assignment.get('initial_state')}")
-        lines.append(f"  - Objectif : {result.assignment.get('goal_state')}")
-        lines.append(f"  - Actions disponibles : {result.assignment.get('actions_loaded')}")
+        plan = (result.assignment or {}).get("plan", [])
+        lines = ["Un plan de planification PDDL a été trouvé :"]
+        lines.append(f"  - État initial : {model.init}")
+        lines.append(f"  - Objectif : {model.goal}")
+        if plan:
+            lines.append(f"  - Plan ({len(plan)} action(s)) :")
+            for i, action in enumerate(plan, 1):
+                lines.append(f"      {i}. {action}")
+        else:
+            lines.append(
+                "  - Aucune action nécessaire : l'objectif est déjà satisfait "
+                "dans l'état initial."
+            )
         return "\n".join(lines)
     
     if model.expected_status == "UNSAT" and result.status == "UNSAT":
